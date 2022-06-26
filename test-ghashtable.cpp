@@ -1,10 +1,10 @@
-#include "ghashset.h"
+#include "ghashtable.h"
 #include <map>
 #include <string>
 
 int main()
 {
-    HT *h = ht_new();
+    gHT *h = ht_new();
     assert(h != NULL);
 
     char command[128] = {};

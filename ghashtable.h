@@ -22,7 +22,7 @@ typedef enum {
     EMPTY = 0,
     DELETED,
     IN_USE,
-} HT_NodeSt;
+} gHT_NodeSt;
 
 typedef struct {
     char key[MAX_KEY_LEN];
@@ -31,12 +31,12 @@ typedef struct {
     size_t hash3;
     size_t hash4;
     T value;
-    HT_NodeSt state;
-} HT_Node;
+    gHT_NodeSt state;
+} gHT_Node;
 
 typedef struct {
-    HT_Node *data;
-} HT;
+    gHT_Node *data;
+} gHT;
 
 static size_t ht_hashKey(const char *key)
 {
@@ -105,10 +105,10 @@ static inline size_t ht_hash4(const char *key)
     return hash;
 }
 
-HT* ht_new()
+gHT* ht_new()
 {
-    HT* ctx = (HT*)calloc(1, sizeof(HT));
-    ctx->data = (HT_Node*)calloc(CAPACITY, sizeof(HT_Node));
+    gHT* ctx = (gHT*)calloc(1, sizeof(gHT));
+    ctx->data = (gHT_Node*)calloc(CAPACITY, sizeof(gHT_Node));
     if (ctx->data == NULL) {
         free(ctx);
         return NULL;
@@ -116,7 +116,7 @@ HT* ht_new()
     return ctx;
 }
 
-HT* ht_delete(HT *ctx)
+gHT* ht_delete(gHT *ctx)
 {
     if (ctx == NULL) {
         #ifndef NDEBUG
@@ -129,14 +129,14 @@ HT* ht_delete(HT *ctx)
     return NULL;
 }
 
-HT_Node *ht_find_internal_(HT *ctx, char *key)
+gHT_Node *ht_find_internal_(gHT *ctx, char *key)
 {
     assert(ctx != NULL);
     assert(CAPACITY != 0 && CAPACITY < 1<<30);
 
     size_t hash = ht_hashKey(key) % CAPACITY;
 
-    HT_Node *iter = ctx->data + hash;
+    gHT_Node *iter = ctx->data + hash;
     size_t inc = ht_hashSecond(key);
     size_t hash2 = inc;
     if (inc == 0)
@@ -153,26 +153,26 @@ HT_Node *ht_find_internal_(HT *ctx, char *key)
     return NULL;
 }
 
-T ht_find(HT *ctx, char *key)
+T ht_find(gHT *ctx, char *key)
 {
     assert(ctx != NULL);
     if (ctx == NULL)
         return NOT_FOUND_VAL;
 
-    HT_Node *res = ht_find_internal_(ctx, key);
+    gHT_Node *res = ht_find_internal_(ctx, key);
     if (res == NULL)
         return NOT_FOUND_VAL;
     return ht_find_internal_(ctx, key)->value;
 }
 
-T ht_insert(HT *ctx, char *key, size_t val, bool update)
+T ht_insert(gHT *ctx, char *key, size_t val, bool update)
 {
     assert(ctx != NULL);
     assert(CAPACITY != 0 && CAPACITY < 1<<30);
     if (ctx == NULL)
         return NOT_FOUND_VAL;
 
-    HT_Node *res = ht_find_internal_(ctx, key);
+    gHT_Node *res = ht_find_internal_(ctx, key);
     if ((update && res == NULL) || (!update && res != NULL))
         return NOT_FOUND_VAL;
 
@@ -182,7 +182,7 @@ T ht_insert(HT *ctx, char *key, size_t val, bool update)
     }
 
     size_t hash = ht_hashKey(key) % CAPACITY;
-    HT_Node *iter = ctx->data + hash;
+    gHT_Node *iter = ctx->data + hash;
     size_t inc = ht_hashSecond(key);
     size_t hash2 = inc;
     if (inc == 0)
@@ -206,14 +206,14 @@ T ht_insert(HT *ctx, char *key, size_t val, bool update)
     return NOT_FOUND_VAL;
 }
 
-T ht_erase(HT *ctx, char *key)
+T ht_erase(gHT *ctx, char *key)
 {
     assert(ctx != NULL);
     assert(CAPACITY != 0 && CAPACITY < 1<<30);
     if (ctx == NULL)
         return NOT_FOUND_VAL;
 
-    HT_Node *res = ht_find_internal_(ctx, key);
+    gHT_Node *res = ht_find_internal_(ctx, key);
     if (res == NULL)
         return NOT_FOUND_VAL;
 
@@ -221,7 +221,7 @@ T ht_erase(HT *ctx, char *key)
     return 10;
 }
 
-void ht_dump(HT *ctx, FILE *out)
+void ht_dump(gHT *ctx, FILE *out)
 {
     assert(ctx != NULL);
     assert(CAPACITY != 0 && CAPACITY < 1<<30);
