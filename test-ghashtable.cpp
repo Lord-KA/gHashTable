@@ -1,10 +1,10 @@
-#include "ghashset.h"
+#include "ghashtable.h"
 #include <map>
 #include <string>
 
 int main()
 {
-    HT *h = ht_new();
+    gHT *h = gHT_new();
     assert(h != NULL);
 
     char command[128] = {};
@@ -39,13 +39,13 @@ int main()
         switch (*command) {
         case 'A':
             if (map.find(std::string(key)) != map.end()) {
-                if (ht_insert(h, key, val, false) != NOT_FOUND_VAL) {
+                if (gHT_insert(h, key, val, false) != NOT_FOUND_VAL) {
                     fprintf(stderr, "key = $%s$\n", key);
                     assert(false);
                 }
             } else {
                 map.insert(std::pair{std::string(key), val});
-                if (ht_insert(h, key, val, false) == NOT_FOUND_VAL) {
+                if (gHT_insert(h, key, val, false) == NOT_FOUND_VAL) {
                     fprintf(stderr, "key = $%s$\n", key);
                     assert(false);
                 }
@@ -53,12 +53,12 @@ int main()
             break;
         case 'D':
             if (map.find(std::string(key)) == map.end()) {
-                if (ht_erase(h, key) != NOT_FOUND_VAL) {
+                if (gHT_erase(h, key) != NOT_FOUND_VAL) {
                     fprintf(stderr, "key = $%s$\n", key);
                     assert(false);
                 }
             } else {
-                if (ht_erase(h, key) == NOT_FOUND_VAL) {
+                if (gHT_erase(h, key) == NOT_FOUND_VAL) {
                     fprintf(stderr, "key = $%s$\n", key);
                     assert(false);
                 }
@@ -67,21 +67,21 @@ int main()
             break;
         case 'U':
             if (map.find(std::string(key)) != map.end()) {
-                if (ht_insert(h, key, val, true) != NOT_FOUND_VAL) {
+                if (gHT_insert(h, key, val, true) != NOT_FOUND_VAL) {
                     fprintf(stderr, "key = $%s$\n", key);
                     assert(false);
                 }
                 map.erase(std::string(key));
                 map.insert(std::pair{std::string(key), val});
             } else {
-                if (ht_insert(h, key, val, true) == NOT_FOUND_VAL) {
+                if (gHT_insert(h, key, val, true) == NOT_FOUND_VAL) {
                     fprintf(stderr, "key = $%s$\n", key);
                     assert(false);
                 }
             }
             break;
         case 'P':
-            val = ht_find(h, key);
+            val = gHT_find(h, key);
             if (val == NOT_FOUND_VAL) {
                 assert(map.find(key) == map.end());
                 break;
@@ -92,7 +92,7 @@ int main()
         }
     }
     #ifdef EXTRA_VERBOSE
-        ht_dump(h, stderr);
+        gHT_dump(h, stderr);
     #endif
-    ht_delete(h);
+    gHT_delete(h);
 }

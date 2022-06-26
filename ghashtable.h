@@ -16,13 +16,15 @@ typedef size_t T;
 #define MAX_KEY_LEN (64)
 #endif
 
-#define CAPACITY 1046527lu
+#ifndef GHT_CAPACITY
+#define GHT_CAPACITY 1046527lu
+#endif
 
 typedef enum {
     EMPTY = 0,
     DELETED,
     IN_USE,
-} HT_NodeSt;
+} gHT_NodeSt;
 
 typedef struct {
     char key[MAX_KEY_LEN];
@@ -31,14 +33,14 @@ typedef struct {
     size_t hash3;
     size_t hash4;
     T value;
-    HT_NodeSt state;
-} HT_Node;
+    gHT_NodeSt state;
+} gHT_Node;
 
 typedef struct {
-    HT_Node *data;
-} HT;
+    gHT_Node *data;
+} gHT;
 
-static size_t ht_hashKey(const char *key)
+static size_t gHT_hashKey(const char *key)
 {
     char *iter = (char*)key;
     size_t hash = 0;
@@ -63,7 +65,7 @@ static inline size_t hash_rol_asm(size_t hash, char data)
     return hash;
 }
 
-static inline size_t ht_hashSecond(const char *key)
+static inline size_t gHT_hashSecond(const char *key)
 {
     char *iter = (char*)key;
     size_t hash = 0;
@@ -76,7 +78,7 @@ static inline size_t ht_hashSecond(const char *key)
     return hash;
 }
 
-static inline size_t ht_hash3(const char *key)
+static inline size_t gHT_hash3(const char *key)
 {
 
     char *iter = (char*)key;
@@ -89,7 +91,7 @@ static inline size_t ht_hash3(const char *key)
     return hash;
 }
 
-static inline size_t ht_hash4(const char *key)
+static inline size_t gHT_hash4(const char *key)
 {
     char *iter = (char*)key;
     uint64_t hash = 0;
@@ -105,10 +107,10 @@ static inline size_t ht_hash4(const char *key)
     return hash;
 }
 
-HT* ht_new()
+static gHT* gHT_new()
 {
-    HT* ctx = (HT*)calloc(1, sizeof(HT));
-    ctx->data = (HT_Node*)calloc(CAPACITY, sizeof(HT_Node));
+    gHT* ctx = (gHT*)calloc(1, sizeof(gHT));
+    ctx->data = (gHT_Node*)calloc(GHT_CAPACITY, sizeof(gHT_Node));
     if (ctx->data == NULL) {
         free(ctx);
         return NULL;
@@ -116,7 +118,7 @@ HT* ht_new()
     return ctx;
 }
 
-HT* ht_delete(HT *ctx)
+static gHT* gHT_delete(gHT *ctx)
 {
     if (ctx == NULL) {
         #ifndef NDEBUG
@@ -129,21 +131,21 @@ HT* ht_delete(HT *ctx)
     return NULL;
 }
 
-HT_Node *ht_find_internal_(HT *ctx, char *key)
+static gHT_Node *gHT_find_internal_(gHT *ctx, char *key)
 {
     assert(ctx != NULL);
-    assert(CAPACITY != 0 && CAPACITY < 1<<30);
+    assert(GHT_CAPACITY != 0 && GHT_CAPACITY < 1<<30);
 
-    size_t hash = ht_hashKey(key) % CAPACITY;
+    size_t hash = gHT_hashKey(key) % GHT_CAPACITY;
 
-    HT_Node *iter = ctx->data + hash;
-    size_t inc = ht_hashSecond(key);
+    gHT_Node *iter = ctx->data + hash;
+    size_t inc = gHT_hashSecond(key);
     size_t hash2 = inc;
     if (inc == 0)
         ++inc;
-    size_t hash3 = ht_hash3(key);
-    size_t hash4 = ht_hash4(key);
-    for (size_t i = 0; i < CAPACITY; ++i, iter = ctx->data + (hash + i) % CAPACITY) {
+    size_t hash3 = gHT_hash3(key);
+    size_t hash4 = gHT_hash4(key);
+    for (size_t i = 0; i < GHT_CAPACITY; ++i, iter = ctx->data + (hash + i) % GHT_CAPACITY) {
         if (iter->state == EMPTY)
             return NULL;
         if (iter->state == IN_USE && iter->hash1 == hash && iter->hash2 == hash2 && iter->hash3 == hash3 && iter->hash4 == hash4 && !strcmp(key, iter->key))
@@ -153,26 +155,26 @@ HT_Node *ht_find_internal_(HT *ctx, char *key)
     return NULL;
 }
 
-T ht_find(HT *ctx, char *key)
+static T gHT_find(gHT *ctx, char *key)
 {
     assert(ctx != NULL);
     if (ctx == NULL)
         return NOT_FOUND_VAL;
 
-    HT_Node *res = ht_find_internal_(ctx, key);
+    gHT_Node *res = gHT_find_internal_(ctx, key);
     if (res == NULL)
         return NOT_FOUND_VAL;
-    return ht_find_internal_(ctx, key)->value;
+    return gHT_find_internal_(ctx, key)->value;
 }
 
-T ht_insert(HT *ctx, char *key, size_t val, bool update)
+static T gHT_insert(gHT *ctx, char *key, size_t val, bool update)
 {
     assert(ctx != NULL);
-    assert(CAPACITY != 0 && CAPACITY < 1<<30);
+    assert(GHT_CAPACITY != 0 && GHT_CAPACITY < 1<<30);
     if (ctx == NULL)
         return NOT_FOUND_VAL;
 
-    HT_Node *res = ht_find_internal_(ctx, key);
+    gHT_Node *res = gHT_find_internal_(ctx, key);
     if ((update && res == NULL) || (!update && res != NULL))
         return NOT_FOUND_VAL;
 
@@ -181,15 +183,15 @@ T ht_insert(HT *ctx, char *key, size_t val, bool update)
         return 1;
     }
 
-    size_t hash = ht_hashKey(key) % CAPACITY;
-    HT_Node *iter = ctx->data + hash;
-    size_t inc = ht_hashSecond(key);
+    size_t hash = gHT_hashKey(key) % GHT_CAPACITY;
+    gHT_Node *iter = ctx->data + hash;
+    size_t inc = gHT_hashSecond(key);
     size_t hash2 = inc;
     if (inc == 0)
         ++inc;
-    size_t hash3 = ht_hash3(key);
-    size_t hash4 = ht_hash4(key);
-    for (size_t i = 0; i < CAPACITY; ++i, iter = ctx->data + (hash + i) % CAPACITY) {
+    size_t hash3 = gHT_hash3(key);
+    size_t hash4 = gHT_hash4(key);
+    for (size_t i = 0; i < GHT_CAPACITY; ++i, iter = ctx->data + (hash + i) % GHT_CAPACITY) {
         if (iter->state != IN_USE) {
             iter->hash1 = hash;
             iter->hash2 = hash2;
@@ -206,14 +208,14 @@ T ht_insert(HT *ctx, char *key, size_t val, bool update)
     return NOT_FOUND_VAL;
 }
 
-T ht_erase(HT *ctx, char *key)
+static T gHT_erase(gHT *ctx, char *key)
 {
     assert(ctx != NULL);
-    assert(CAPACITY != 0 && CAPACITY < 1<<30);
+    assert(GHT_CAPACITY != 0 && GHT_CAPACITY < 1<<30);
     if (ctx == NULL)
         return NOT_FOUND_VAL;
 
-    HT_Node *res = ht_find_internal_(ctx, key);
+    gHT_Node *res = gHT_find_internal_(ctx, key);
     if (res == NULL)
         return NOT_FOUND_VAL;
 
@@ -221,15 +223,15 @@ T ht_erase(HT *ctx, char *key)
     return 10;
 }
 
-void ht_dump(HT *ctx, FILE *out)
+static void gHT_dump(gHT *ctx, FILE *out)
 {
     assert(ctx != NULL);
-    assert(CAPACITY != 0 && CAPACITY < 1<<30);
+    assert(GHT_CAPACITY != 0 && GHT_CAPACITY < 1<<30);
     if (ctx == NULL)
         return;
 
-    fprintf(out, "capacity = %zu\n", CAPACITY);
-    for (size_t i = 0; i < CAPACITY; ++i) {
+    fprintf(out, "capacity = %zu\n", GHT_CAPACITY);
+    for (size_t i = 0; i < GHT_CAPACITY; ++i) {
         if (ctx->data[i].state == IN_USE) {
             fprintf(out, "%zu \t |$%s$ | %zu | ", i, ctx->data[i].key, ctx->data[i].value);
             fprintf(out, "IN_USE");
